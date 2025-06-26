@@ -9,7 +9,8 @@ st.markdown(
     """
     <h5 style='color:gray; font-weight:normal;'>
     Wildfires are increasing in frequency and intensity across the U.S.—but not all fires are the same.<br>
-    This interactive dashboard visualizes 23 years of wildfire data to help you uncover trends in fire count, cause, duration, and size by state.
+    This interactive dashboard visualizes 23 years of U.S. wildfire data—revealing when, where, and why fires occur.
+    Each chart helps uncover trends in fire count, cause, duration, and size by state, so you can better understand the patterns and take steps to stay safe, aware, and engaged.
     </h5>
     """,
     unsafe_allow_html=True
@@ -20,6 +21,68 @@ def load_data():
     return pd.read_csv("Full_Wildfire_Dataset__1992_2015_.csv", parse_dates=["DISCOVERY_DATE", "CONTAINMENT_DATE"])
 
 data = load_data()
+
+
+# Sidebar: So What?
+st.sidebar.title("Why This Matters")
+
+with st.sidebar.expander("🔥Wildfires Affect More Than Just Burned Land"):
+    st.markdown("""
+Even if you're far from a fire zone, wildfires can impact:
+
+- **Air quality**, even hundreds of miles away  
+- **Water supply**, as watersheds are damaged by runoff and ash  
+- **Energy infrastructure**, causing blackouts or utility failures  
+- **Transportation and communication systems**  
+- **Homes, livelihoods, and community health**
+    """)
+
+st.sidebar.markdown("""
+For those living in fire-prone regions, preparation can be ***lifesaving!***  
+                    
+For others, understanding wildfire risks helps promote **smarter land use**, **public safety planning**, and **climate resilience**.
+""")
+
+
+st.sidebar.markdown("### 📣 What You Can Do")
+
+st.sidebar.markdown("""
+- Learn your local fire risk  
+- Make an evacuation plan  
+- Support fire prevention efforts  
+- Stay informed during fire season
+""")
+
+with st.sidebar.expander("🧭 Emergency & Education Resources"):
+    st.markdown("""
+- [Red Cross Wildfire Safety Guide](https://www.redcross.org/get-help/how-to-prepare-for-emergencies/types-of-emergencies/wildfire.html)  
+- [Red Cross: How to Prevent Wildfires](https://www.redcross.org/get-help/how-to-prepare-for-emergencies/types-of-emergencies/wildfire/how-to-prevent-wildfires.html)  
+- [Ready.gov Wildfires](https://www.ready.gov/wildfires)  
+- [AirNow Fire & Smoke Map](https://fire.airnow.gov/)  
+    """)
+with st.sidebar.expander("📌 Final Notes & Key Takeaways"):
+    st.markdown("""
+    - **Fire Activity Is Highly State-Dependent**: States like California, Texas, and Georgia consistently report high wildfire counts across the years. Interacting with the state bar chart reveals stark differences between neighboring states.
+    
+    - **Human Activity Dominates Causes**: Exploring the strip plot shows that many long-duration fires stem from human-related causes such as debris burning, equipment use, or arson—especially in populated states.
+
+    - **Fire Size Varies Widely by Cause**: The box plot reveals that lightning-caused fires often result in some of the largest acreage burned, likely due to their occurrence in remote or unmanaged areas.
+
+    - **Temporal Trends Show Fluctuations and Clusters**: The line chart exposes periodic spikes in fire counts (e.g., around drought years), and lets users identify how some states experience more volatility over time than others.
+    """)
+
+with st.sidebar.expander("ℹ️ About the Dataset"):
+    st.markdown("""
+This dashboard visualizes U.S. wildfire data from 1992 to 2015 based on records compiled by federal, state, and local fire organizations.
+
+**Source**:  
+Short, Karen C. 2022. *Spatial wildfire occurrence data for the United States, 1992–2020 [FPA_FOD_20221014]*.  
+6th Edition. Fort Collins, CO: Forest Service Research Data Archive.  
+[DOI: 10.2737/RDS-2013-0009.6](https://doi.org/10.2737/RDS-2013-0009.6)
+
+**Note**:  
+This dashboard uses a cleaned subset of the dataset (1992–2015) and focuses on trends in fire count, duration, size, and cause across U.S. states.
+    """)
 
 # Define U.S. Census sub-region mapping
 region_map = {
@@ -136,6 +199,7 @@ st.markdown(f"""
 This chart compares how large wildfires become depending on their cause in **{selected_state}**.  
 A **logarithmic y-axis** helps visualize variation across small and massive fires. Some causes may lead to fewer—but far larger—fires.
     """)
+
 box_plot = alt.Chart(scatter_data).mark_boxplot(extent="min-max").encode(
     x=alt.X("STAT_CAUSE_DESCR:N", title="Cause", sort="-y", axis=alt.Axis(labelAngle=-45)),
     y=alt.Y("FIRE_SIZE:Q", title="Acres Burned", scale=alt.Scale(type="log")),  # Log scale for clarity
@@ -148,28 +212,4 @@ box_plot = alt.Chart(scatter_data).mark_boxplot(extent="min-max").encode(
 
 st.altair_chart(box_plot, use_container_width=True)
 
-with st.expander("Final Notes & Key Takeaways "):
-    st.markdown("""
-    - **Fire Activity Is Highly State-Dependent**: States like California, Texas, and Georgia consistently report high wildfire counts across the years. Interacting with the state bar chart reveals stark differences between neighboring states.
-    
-    - **Human Activity Dominates Causes**: Exploring the strip plot shows that many long-duration fires stem from human-related causes such as debris burning, equipment use, or arson—especially in populated states.
-
-    - **Fire Size Varies Widely by Cause**: The box plot reveals that lightning-caused fires often result in some of the largest acreage burned, likely due to their occurrence in remote or unmanaged areas.
-
-    - **Temporal Trends Show Fluctuations and Clusters**: The line chart exposes periodic spikes in fire counts (e.g., around drought years), and lets users identify how some states experience more volatility over time than others.
-    """)
-
-
-
-with st.expander("ℹ️ About the Dataset"):
-    st.markdown("""
-This dashboard visualizes U.S. wildfire data from 1992 to 2015 based on records compiled by federal, state, and local fire organizations.
-
-**Source**:  
-Short, Karen C. 2022. *Spatial wildfire occurrence data for the United States, 1992–2020 [FPA_FOD_20221014]*.  
-6th Edition. Fort Collins, CO: Forest Service Research Data Archive.  
-[DOI: 10.2737/RDS-2013-0009.6](https://doi.org/10.2737/RDS-2013-0009.6)
-
-**Note**:  
-This dashboard uses a cleaned subset of the dataset (1992–2015) and focuses on trends in fire count, duration, size, and cause across U.S. states.
-    """)
+# st.caption("Make sure to check out the Resources and Final Takeaways sections in the sidebar! Stay Safe!")
