@@ -15,6 +15,15 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+st.markdown("#### Some Questions to Consider")
+st.markdown("""
+- Do human activities or natural factors lead to more damaging fire behavior? (Consider population density!)
+- Which regions of the U.S. are persistently vulnerable to wildfire outbreaks?
+- How has the geographic distribution shifted over time?
+            """)
+
+st.markdown("---")
+
 
 @st.cache_data
 def load_data():
@@ -103,27 +112,30 @@ data["REGION"] = data["STATE"].map(state_to_region)
 state_counts = data.groupby(["STATE"]).size().reset_index(name="Fire_Count")
 
 # Multi on state field
-# click_selection = alt.selection_multi(fields=["STATE"], empty="none")
 
 click_selection = alt.selection_point(fields=["STATE"], toggle=True, empty="none")
 
-st.markdown(
-    """**Wildfires Across States and Time (1992–2015)**
+st.markdown("### Wildfires Across Time and States (1992–2015)")
+st.markdown("""
+Geographic patterns of wildfires reveal regional vulnerabilities and can reflect changes in climate, land use, or fire management policy.
 
+*Use these interactive charts to explore which U.S. states experienced the most wildfires between 1992–2015. Click on a state bar to see its **yearly** trend in the linked charts below.*
     """)
-# Bar Chart colored by STATE 
+
+# Bar Chart COUNT colored by STATE 
+st.markdown("##### 🗺️ State-by-State Fire Count")
 bar_chart = alt.Chart(state_counts).mark_bar().encode(
     x=alt.X("STATE:N", sort="ascending", title="US State"),
     y=alt.Y("Fire_Count:Q", title="Total Wildfires"),
     color=alt.Color("STATE:N", title="State"),
     tooltip=["STATE", "Fire_Count"],
-    opacity=alt.condition(click_selection, alt.value(1), alt.value(0.5))
+    opacity=alt.condition(click_selection, alt.value(1), alt.value(0.25))
 ).add_params(
     click_selection
 ).properties(
     width=800,
     height=400
-)
+).interactive()
 
 # Line Chart for Yearly Trends 
 yearly_trends = data.groupby(["FIRE_YEAR", "STATE"]).size().reset_index(name="Fire_Count")
@@ -138,25 +150,22 @@ line_chart = alt.Chart(yearly_trends).mark_line(point=True).encode(
 ).properties(
     width=800,
     height=300,
-    title="Wildfires Through 1992-2015"
+    title="📆 A Temporal View of Wildfires, 1992-2015"
 )
 
-# instruction and info
-st.markdown("""
-*Geographic patterns of wildfires reveal regional vulnerabilities and can reflect changes in climate, land use, or fire management policy.*
-
-Use this interactive chart to explore which U.S. states experienced the most wildfires between 1992–2015.  
-Click on a state bar to reveal **yearly trends** below.
-    """)
-st.caption("💡 Tip: Hold `Shift` and click multiple bars to compare several states at once.")
+st.caption("💡 Tip: Hold `Shift` and click multiple bars to compare several states at once. (If examining smaller states, zooming may be helpful!)")
 
 st.altair_chart(bar_chart & line_chart, use_container_width=True)
 
 
 # Cause vs. Size/Duration 
+st.markdown("### What Sparks a Wildfire—and What Makes It Last?")
+st.markdown("""
+Wildfires begin for many reasons—but not all causes are equal. Some result in fast, containable burns.
+Others rage for days and spread across vast terrain.
 
-st.markdown("### 🔍 Explore Wildfire Duration vs. Cause")
-st.markdown("Select a state to explore what causes long, large fires.")
+These next two charts reveal how **cause** relates to both **fire duration** and **fire size**. Use the dropdown to explore patterns in a given state.
+""")
 
 # Adding DURATION_DAYS column
 data["DURATION_DAYS"] = (data["CONTAINMENT_DATE"] - data["DISCOVERY_DATE"]).dt.days
@@ -164,20 +173,19 @@ data = data.dropna(subset=["DURATION_DAYS", "FIRE_SIZE", "STAT_CAUSE_DESCR"])
 data = data[data["DURATION_DAYS"] >= 0]
 
 # Dropdown to select a state
-state_options = ["All States"] + sorted(data["STATE"].dropna().unique())
+state_options = sorted(data["STATE"].dropna().unique())
 
 selected_state = st.selectbox("Select a state to filter by:", options=state_options, index=state_options.index("CA"))
 
+st.markdown(f"##### ⏱️🔥 Explore Wildfire Duration vs. Cause in **{selected_state}**")
+
 # Filtering data:
-scatter_data = data if selected_state == "All States" else data[data["STATE"] == selected_state]
+scatter_data = data[data["STATE"] == selected_state]
 
 
-st.markdown(f"""
-This chart shows how long wildfires last based on their reported cause in **{selected_state}**.  
+st.markdown("**Try** identifying which causes are associated with prolonged fire events and explore how that varies by state.")
 
-*Hover over points to see specific fire names, counties, and sizes.*  
-**Try** identifying which causes are associated with prolonged fire events and explore how that varies by state.
-    """)
+st.caption("*Hover over points to see specific fire names, counties, and sizes.*") 
 
 # strip plot chart:
 strip = alt.Chart(scatter_data).mark_circle(size=40, opacity=0.5).encode(
@@ -193,21 +201,19 @@ strip = alt.Chart(scatter_data).mark_circle(size=40, opacity=0.5).encode(
 
 st.altair_chart(strip, use_container_width=True)
 
-st.markdown("### Fire Size by Recorded Cause")
-st.markdown("This chart shows the distribution of wildfire sizes (in acres) by cause, in the selected state.")
-st.markdown(f"""
-This chart compares how large wildfires become depending on their cause in **{selected_state}**.  
-A **logarithmic y-axis** helps visualize variation across small and massive fires. Some causes may lead to fewer—but far larger—fires.
-    """)
+st.markdown(f"##### 📏🔥 Explore Wildfire Size vs. Cause in **{selected_state}**")
+st.markdown("**Try** identifying which causes are linked to especially large wildfires—and notice which ones tend to stay small. What patterns emerge across different states?")
+
+st.caption(f"*A **logarithmic y-axis** helps visualize variation across small and massive fires. Some causes may lead to fewer—but far larger—fires.*")
 
 box_plot = alt.Chart(scatter_data).mark_boxplot(extent="min-max").encode(
-    x=alt.X("STAT_CAUSE_DESCR:N", title="Cause", sort="-y", axis=alt.Axis(labelAngle=-45)),
+    x=alt.X("STAT_CAUSE_DESCR:N", title="Cause", sort="-y", axis=alt.Axis(labelAngle=-90)),
     y=alt.Y("FIRE_SIZE:Q", title="Acres Burned", scale=alt.Scale(type="log")),  # Log scale for clarity
     color=alt.Color("STAT_CAUSE_DESCR:N", legend=None)
 ).properties(
     width=900,
     height=400,
-    title=f"Distribution of Fire Sizes by Cause in {selected_state}"
+    title=f"Distribution of Fire Sizes by Cause ({selected_state})"
 ).interactive()
 
 st.altair_chart(box_plot, use_container_width=True)
