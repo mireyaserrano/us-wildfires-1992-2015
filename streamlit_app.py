@@ -15,7 +15,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-st.markdown("#### Some Questions to Consider")
+st.markdown("#### *Some Questions to Consider*")
 st.markdown("""
 - Do human activities or natural factors lead to more damaging fire behavior? (Consider population density!)
 - Which regions of the U.S. are persistently vulnerable to wildfire outbreaks?
@@ -47,10 +47,12 @@ Even if you're far from a fire zone, wildfires can impact:
     """)
 
 st.sidebar.markdown("""
+**Whether you're a resident, researcher, policymaker, or simply a concerned citizen: data-driven awareness is a step toward collective action.**
+                    
 For those living in fire-prone regions, preparation can be ***lifesaving!***  
                     
-For others, understanding wildfire risks helps promote **smarter land use**, **public safety planning**, and **climate resilience**.
-""")
+For others, understanding wildfire risks helps promote **smarter land use**, **public safety planning**, and **climate-informed policy**.
+                    """)
 
 
 st.sidebar.markdown("### 📣 What You Can Do")
@@ -93,23 +95,27 @@ Short, Karen C. 2022. *Spatial wildfire occurrence data for the United States, 1
 This dashboard uses a cleaned subset of the dataset (1992–2015) and focuses on trends in fire count, duration, size, and cause across U.S. states.
     """)
 
-# Define U.S. Census sub-region mapping
-region_map = {
-    "Pacific": ["AK", "CA", "HI", "OR", "WA"],
-    "Mountain": ["AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY"],
-    "West South Central": ["AR", "LA", "OK", "TX"],
-    "East South Central": ["AL", "KY", "MS", "TN"],
-    "South Atlantic": ["DE", "DC", "FL", "GA", "MD", "NC", "SC", "VA", "WV"],
-    "West North Central": ["IA", "KS", "MN", "MO", "NE", "ND", "SD"],
-    "East North Central": ["IL", "IN", "MI", "OH", "WI"],
-    "Mid-Atlantic": ["NJ", "NY", "PA"],
-    "New England": ["CT", "ME", "MA", "NH", "RI", "VT"]
-}
-state_to_region = {state: region for region, states in region_map.items() for state in states}
-data["REGION"] = data["STATE"].map(state_to_region)
-
 # counting fires by state
 state_counts = data.groupby(["STATE"]).size().reset_index(name="Fire_Count")
+
+
+state_name_map = {
+    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+    'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+    'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+    'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+    'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+    'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+    'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+    'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+    'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+    'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+    'WI': 'Wisconsin', 'WY': 'Wyoming', 'DC': 'District of Columbia'
+}
+
+state_counts["State_Full"] = state_counts["STATE"].map(state_name_map)
 
 # Multi on state field
 
@@ -128,8 +134,11 @@ bar_chart = alt.Chart(state_counts).mark_bar().encode(
     x=alt.X("STATE:N", sort="ascending", title="US State"),
     y=alt.Y("Fire_Count:Q", title="Total Wildfires"),
     color=alt.Color("STATE:N", title="State"),
-    tooltip=["STATE", "Fire_Count"],
-    opacity=alt.condition(click_selection, alt.value(1), alt.value(0.25))
+
+    tooltip=["State_Full", "Fire_Count"],
+
+    # tooltip=["STATE", "Fire_Count"],
+    opacity=alt.condition(click_selection, alt.value(1), alt.value(0.15))
 ).add_params(
     click_selection
 ).properties(
@@ -155,7 +164,31 @@ line_chart = alt.Chart(yearly_trends).mark_line(point=True).encode(
 
 st.caption("💡 Tip: Hold `Shift` and click multiple bars to compare several states at once. (If examining smaller states, zooming may be helpful!)")
 
-st.altair_chart(bar_chart & line_chart, use_container_width=True)
+
+
+# new here:
+# labels the end of each line by last fire year
+latest_year = yearly_trends.groupby("STATE")["FIRE_YEAR"].max().reset_index()
+label_data = pd.merge(yearly_trends, latest_year, on=["STATE", "FIRE_YEAR"])
+
+# Adds conditional text labels ONLY for selected states
+line_labels = alt.Chart(label_data).mark_text(
+    align='left',
+    dx=5,
+    dy=-5
+).encode(
+    x=alt.X("FIRE_YEAR:O"),
+    y=alt.Y("Fire_Count:Q"),
+    text=alt.Text("STATE:N"),
+    color=alt.Color("STATE:N", legend=None)
+).transform_filter(
+    click_selection
+)
+
+
+st.altair_chart((bar_chart & (line_chart + line_labels)).interactive(), use_container_width=True)
+
+# st.altair_chart(bar_chart & line_chart, use_container_width=True)
 
 
 # Cause vs. Size/Duration 
@@ -175,7 +208,7 @@ data = data[data["DURATION_DAYS"] >= 0]
 # Dropdown to select a state
 state_options = sorted(data["STATE"].dropna().unique())
 
-selected_state = st.selectbox("Select a state to filter by:", options=state_options, index=state_options.index("CA"))
+selected_state = st.selectbox("*Select a state to filter by:*", options=state_options, index=state_options.index("CA"))
 
 st.markdown(f"##### ⏱️🔥 Explore Wildfire Duration vs. Cause in **{selected_state}**")
 
@@ -185,7 +218,7 @@ scatter_data = data[data["STATE"] == selected_state]
 
 st.markdown("**Try** identifying which causes are associated with prolonged fire events and explore how that varies by state.")
 
-st.caption("*Hover over points to see specific fire names, counties, and sizes.*") 
+st.caption("💡 *Hover over points to see specific fire names, counties, and sizes.*") 
 
 # strip plot chart:
 strip = alt.Chart(scatter_data).mark_circle(size=40, opacity=0.5).encode(
@@ -202,9 +235,12 @@ strip = alt.Chart(scatter_data).mark_circle(size=40, opacity=0.5).encode(
 st.altair_chart(strip, use_container_width=True)
 
 st.markdown(f"##### 📏🔥 Explore Wildfire Size vs. Cause in **{selected_state}**")
-st.markdown("**Try** identifying which causes are linked to especially large wildfires—and notice which ones tend to stay small. What patterns emerge across different states?")
+st.markdown("""**Try** identifying which causes are linked to especially large wildfires—and notice which ones tend to stay small. What patterns emerge across different states?
+            """)
 
-st.caption(f"*A **logarithmic y-axis** helps visualize variation across small and massive fires. Some causes may lead to fewer—but far larger—fires.*")
+st.caption(f"""💡 *Hover over box plots to inspect specific data ranges and spot outliers. Look for wide spreads, tall boxes, and isolated points—they reveal how unpredictable some fire causes can be.*
+           (*A logarithmic y-axis helps visualize variation across small and massive fires. Some causes may lead to fewer—but far larger—fires.*)
+           """)
 
 box_plot = alt.Chart(scatter_data).mark_boxplot(extent="min-max").encode(
     x=alt.X("STAT_CAUSE_DESCR:N", title="Cause", sort="-y", axis=alt.Axis(labelAngle=-90)),
@@ -218,4 +254,4 @@ box_plot = alt.Chart(scatter_data).mark_boxplot(extent="min-max").encode(
 
 st.altair_chart(box_plot, use_container_width=True)
 
-# st.caption("Make sure to check out the Resources and Final Takeaways sections in the sidebar! Stay Safe!")
+# st.caption("Make sure to check out the Resources and Final Takeaways sections! Stay Safe!")
