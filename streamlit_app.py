@@ -5,16 +5,29 @@ import altair as alt
 # App setup
 st.set_page_config(layout="wide")
 st.title("Burning Across America: A Visual History of U.S. Wildfires (1992–2015)")
-st.markdown(
-    """
-    <h5 style='color:gray; font-weight:normal;'>
-    Wildfires are increasing in frequency and intensity across the U.S.—but not all fires are the same.<br>
-    This interactive dashboard visualizes 23 years of U.S. wildfire data—revealing when, where, and why fires occur.
-    Each chart helps uncover trends in fire count, cause, duration, and size by state, so you can better understand the patterns and take steps to stay safe, aware, and engaged.
-    </h5>
-    """,
-    unsafe_allow_html=True
+# st.markdown(
+#     """
+#     <h5 style='color:gray; font-weight:normal;'>
+#     Wildfires are increasing in frequency and intensity across the U.S.—but not all fires are the same.<br>
+#     This interactive dashboard visualizes 23 years of U.S. wildfire data—revealing when, where, and why fires occur.
+#     Each chart helps uncover trends in fire count, cause, duration, and size by state, so you can better understand the patterns and take steps to stay safe, aware, and engaged.
+#     </h5>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+st.markdown("""
+            <h5 style='color:#4a4a4a; font-weight:normal;'>
+            Wildfires are <span style='color:#e07b39; font-weight:bold;'>increasing in frequency and intensity</span> across the U.S.—but <span style='color:#f4a261;'>not all fires are the same</span>.<br><br>
+            This interactive dashboard visualizes <span style='color:#f6aa1c;'>23 years of U.S. wildfire data</span>—revealing when, where, and why fires occur.<br><br>
+            Each chart helps uncover trends in <span style='color:#e76f51;'>fire count</span>, <span style='color:#f4a261;'>cause</span>, <span style='color:#e07b39;'>duration</span>, and <span style='color:#bc4b51;'>size</span> by state, so you can better understand the patterns and take steps to stay <span style='color:#2a9d8f; font-weight:bold;'>safe</span>, <span style='color:#2a9d8f; font-weight:bold;'>aware</span>, and <span style='color:#2a9d8f; font-weight:bold;'>engaged</span>.
+            </h5>
+            """, unsafe_allow_html=True
 )
+
+
+
+
 st.markdown("#### *Some Questions to Consider*")
 st.markdown("""
 - Do human activities or natural factors lead to more damaging fire behavior? (Consider population density!)
@@ -254,4 +267,4 @@ box_plot = alt.Chart(scatter_data).mark_boxplot(extent="min-max").encode(
 
 st.altair_chart(box_plot, use_container_width=True)
 
-# st.caption("Make sure to check out the Resources and Final Takeaways sections! Stay Safe!")
+st.caption("<span style='color:#2a9d8f; font-weight:bold;'>Make sure to check out the Resources and Final Takeaways sections! Stay Safe!<span>", unsafe_allow_html=True)
